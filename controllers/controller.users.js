@@ -2,7 +2,7 @@ const User = require('../models/model.users')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
-const { sendVerificationEmail } = require('../lib/emails')
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../lib/emails')
 
 module.exports = {
   register: async (body) => {
@@ -47,15 +47,36 @@ module.exports = {
   },
 
   verifyAccount: async (token) => {
-    if(!token){
+    if (!token) {
       throw Error('Token not provided!')
     }
     const decoded = jwt.verify(token, process.env.JWT_VERIFICATION_SECRET)
-    const user = await User.findOne({_id: decoded}).exec()
-    if(!user){
+    const user = await User.findOne({ _id: decoded }).exec()
+    if (!user) {
       throw Error('User does not exist!')
     }
-    await User.findByIdAndUpdate(user._id, {verified: true}).exec()
+    await User.findByIdAndUpdate(user._id, { verified: true }).exec()
     return true
-  }
+  },
+  requestResetPassword: async (body) => {
+    const { email } = body
+    const user = await User.findOne({ email }).exec()
+    if (!user) {
+      throw Error('User does not exist!')
+    }
+    sendPasswordResetEmail(user)
+    return true
+  },
+  resetPassword: async (body) => {
+    const { token, password } = body
+
+    const decoded = jwt.verify(token, process.env.JWT_VERIFICATION_SECRET)
+    const user = await User.findOne({ _id: decoded }).exec()
+    if (!user) {
+      throw Error('User does not exist!')
+    }
+    const hashPassword = bcrypt.hashSync(password, parseInt(process.env.SALT))
+    await User.findByIdAndUpdate(user._id, { password: hashPassword }).exec()
+    return true
+  },
 }
