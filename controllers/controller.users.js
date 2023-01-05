@@ -1,6 +1,8 @@
 const User = require('../models/model.users')
 const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken')
+
+const { sendVerificationEmail } = require('../lib/emails')
 
 module.exports = {
   register: async (body) => {
@@ -14,6 +16,9 @@ module.exports = {
       lastName: lastName,
       password: hashPassword,
     })
+
+    sendVerificationEmail(user)
+
     delete user._doc.password
     return user
   },
@@ -21,19 +26,36 @@ module.exports = {
   login: async (body) => {
     const { email, password } = body
     const user = await User.findOne({ email }).exec()
-    if(!user){
+    if (!user) {
       throw Error('User does not exist')
     }
-    if(!bcrypt.compareSync(password, user.password)){
+    if (!bcrypt.compareSync(password, user.password)) {
       throw Error('Incorrect password')
     }
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+    if (!user.verified) {
+      throw Error('Account not verified!')
+    }
+
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET)
 
     return token
   },
   getMe: async (_id) => {
-    const user = await User.findOne({_id}).exec()
+    const user = await User.findOne({ _id }).exec()
     return user
+  },
+
+  verifyAccount: async (token) => {
+    if(!token){
+      throw Error('Token not provided!')
+    }
+    const decoded = jwt.verify(token, process.env.JWT_VERIFICATION_SECRET)
+    const user = await User.findOne({_id: decoded}).exec()
+    if(!user){
+      throw Error('User does not exist!')
+    }
+    await User.findByIdAndUpdate(user._id, {verified: true}).exec()
+    return true
   }
 }

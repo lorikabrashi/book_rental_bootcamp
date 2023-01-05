@@ -1,16 +1,17 @@
 const express = require('express')
+const { respond } = require('../lib/responder')
 const router = express.Router()
 const { version, name } = require('../package.json')
 
 router.get('/', function (req, res, next) {
-  res.json({
+  return respond(res, {
     name,
     version,
   })
 })
 
 router.get('/test', async (req, res) => {
-  res.json('TEST')
+  return respond(res, 'test')
 })
 
 module.exports = router
