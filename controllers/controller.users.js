@@ -1,7 +1,7 @@
 const User = require('../models/model.users')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-
+const {USER_ROLES} = require('../lib/constants')
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../lib/emails')
 
 module.exports = {
@@ -41,6 +41,7 @@ module.exports = {
 
     return token
   },
+
   getMe: async (_id) => {
     const user = await User.findOne({ _id }).exec()
     return user
@@ -58,6 +59,7 @@ module.exports = {
     await User.findByIdAndUpdate(user._id, { verified: true }).exec()
     return true
   },
+
   requestResetPassword: async (body) => {
     const { email } = body
     const user = await User.findOne({ email }).exec()
@@ -67,6 +69,7 @@ module.exports = {
     sendPasswordResetEmail(user)
     return true
   },
+
   resetPassword: async (body) => {
     const { token, password } = body
 
@@ -78,5 +81,21 @@ module.exports = {
     const hashPassword = bcrypt.hashSync(password, parseInt(process.env.SALT))
     await User.findByIdAndUpdate(user._id, { password: hashPassword }).exec()
     return true
+  },
+
+  createAdmin: async () => {
+    const user = await User.findOne({ role: USER_ROLES.ADMIN }).exec()
+
+    const hashPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, parseInt(process.env.SALT))
+    if (!user) {
+      User.create({
+        email: process.env.ADMIN_EMAIL,
+        password: hashPassword,
+        verified: true,
+        firstName: 'ADMIN',
+        lastName: 'ADMIN',
+        role:  USER_ROLES.ADMIN,
+      })
+    }
   },
 }

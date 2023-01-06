@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-
+const {USER_ROLES} = require('../lib/constants')
 const userSchema = mongoose.Schema(
   {
     email: { type: String, required: true, unique: true },
@@ -7,6 +7,7 @@ const userSchema = mongoose.Schema(
     lastName: { type: String, required: true },
     password: { type: String, required: true },
     verified: { type: Boolean, default: false },
+    role: { type: String, enum: Object.values(USER_ROLES), default: USER_ROLES.USER },
   },
   {
     timestamps: true,

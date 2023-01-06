@@ -6,7 +6,7 @@ const { respond } = require('../lib/responder')
 
 router.post('/register', fieldValidators.validate.register, fieldValidators.validateResult, async (req, res) => {
   try {
-    const user = await userController.register()
+    const user = await userController.register(req.body)
     return respond(res, user)
   } catch (err) {
     return respond(res, err.message, false)
