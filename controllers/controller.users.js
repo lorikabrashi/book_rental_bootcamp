@@ -27,7 +27,7 @@ module.exports = {
     const { email, password } = body
     const user = await User.findOne({ email }).exec()
     if (!user) {
-      throw Error('User does not exist')
+      throw Error('Invalid User!')
     }
     if (!bcrypt.compareSync(password, user.password)) {
       throw Error('Incorrect password')
@@ -54,7 +54,7 @@ module.exports = {
     const decoded = jwt.verify(token, process.env.JWT_VERIFICATION_SECRET)
     const user = await User.findOne({ _id: decoded }).exec()
     if (!user) {
-      throw Error('User does not exist!')
+      throw Error('Invalid User!')
     }
     await User.findByIdAndUpdate(user._id, { verified: true }).exec()
     return true
@@ -64,7 +64,7 @@ module.exports = {
     const { email } = body
     const user = await User.findOne({ email }).exec()
     if (!user) {
-      throw Error('User does not exist!')
+      throw Error('Invalid User!')
     }
     sendPasswordResetEmail(user)
     return true
@@ -76,7 +76,7 @@ module.exports = {
     const decoded = jwt.verify(token, process.env.JWT_VERIFICATION_SECRET)
     const user = await User.findOne({ _id: decoded }).exec()
     if (!user) {
-      throw Error('User does not exist!')
+      throw Error('Invalid User!')
     }
     const hashPassword = bcrypt.hashSync(password, parseInt(process.env.SALT))
     await User.findByIdAndUpdate(user._id, { password: hashPassword }).exec()
